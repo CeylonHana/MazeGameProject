@@ -5,6 +5,7 @@
 #include "maze_algorithms.h"
 #include "maze_render.h"
 #include <format> // 用于格式化字符串
+#include <cmath> // 用于fabs、round等函数
 
 int main() {
     // 初始化Raylib窗口
@@ -40,35 +41,34 @@ int main() {
     Point path[400]; // 存储路径（最大400个节点）
     int pathLen = 0;
     int algoType = 0; // 0=无路径, 1=DFS, 2=BFS, 3=Dijkstra
-    // ---------------------- 角色动画+移动核心变量（重点修改） ----------------------
-       // 精灵图参数（4行3列：下0/右1/左2/上3）
+
+    // ---------------------- 角色核心变量（重点重构） ----------------------
+    // 精灵图参数（映射：下0/右1/左2/上3，4行3列）
     const int FRAME_COUNT_PER_DIR = 3;
     const int DIR_COUNT = 4;
     float character_width = (float)tex->character.width / FRAME_COUNT_PER_DIR;
     float character_height = (float)tex->character.height / DIR_COUNT;
     Rectangle frame_rect = { 0.0F, 0.0F, character_width, character_height };
 
-    // 移动相关（核心修改：像素级移动）
-    Vector2 player_pos;          // 角色当前像素坐标（浮点型，支持平滑移动）
-    Point current_grid_pos;      // 角色当前所在格子（行列）
-    Point target_grid_pos;       // 角色目标格子（行列）
-    const float MOVE_SPEED_PX = 200.0F; // 固定移动速度：200像素/秒（可调整）
-    bool is_moving = false;      // 是否正在像素级移动
+    // 移动参数（纯像素级）
+    Vector2 player_pos;          // 角色像素坐标（浮点型，支持任意位置）
+    const float MOVE_SPEED = 150.0F; // 基础移动速度（像素/秒）
+    float current_speed = MOVE_SPEED; // 当前移动速度（受草地影响）
+    bool is_moving = false;      // 是否正在移动
     int curr_dir = 0;            // 当前方向：0下/1右/2左/3上
     int curr_frame = 0;          // 当前动画帧
     float anim_timer = 0.0F;     // 动画计时器
-    const float FRAME_DURATION = 0.2F; // 每帧动画时长
+    const float FRAME_DURATION = 0.15F; // 动画帧间隔（更流畅）
 
-    // 游戏状态变量
+    // 游戏状态
     bool game_start = false;
     bool game_win = false;
     bool game_over = false;
     int lava_step = 0;
+    bool on_lava = false;        // 标记是否正踩在熔岩上（避免重复计数）
 
-    // 初始化角色位置
-    current_grid_pos = maze->start;
-    target_grid_pos = current_grid_pos;
-    player_pos = GetCellPixelPos(maze, current_grid_pos.x, current_grid_pos.y);
+    // 初始化角色位置（起点像素坐标）
+    player_pos = GetCellPixelPos(maze, maze->start.x, maze->start.y);
 
     // 主循环
     while (!WindowShouldClose()) {
@@ -78,98 +78,90 @@ int main() {
             TraceLog(LOG_INFO, "游戏开始！");
         }
 
-        // ---------------------- 角色平滑移动+动画逻辑（核心修改） ----------------------
+        // ---------------------- 纯像素级连续移动逻辑（核心） ----------------------
         if (game_start && !game_win && !game_over) {
-            float delta_time = GetFrameTime(); // 每帧耗时
+            float delta_time = GetFrameTime();
+            is_moving = false; // 默认未移动
+            Vector2 move_delta = { 0.0F, 0.0F }; // 移动增量（x/y方向）
 
-            // 1. 只有不在移动时，才响应方向键（避免多指令叠加）
-            if (!is_moving) {
-                Point new_target = current_grid_pos;
-                int new_dir = curr_dir;
+            // 1. 检测方向键，计算移动增量+更新方向
+            if (IsKeyDown(KEY_UP)) {
+                move_delta.y = -current_speed * delta_time;
+                curr_dir = 3; // 上
+                is_moving = true;
+            }
+            else if (IsKeyDown(KEY_DOWN)) {
+                move_delta.y = current_speed * delta_time;
+                curr_dir = 0; // 下
+                is_moving = true;
+            }
+            if (IsKeyDown(KEY_LEFT)) {
+                move_delta.x = -current_speed * delta_time;
+                curr_dir = 1; // 左
+                is_moving = true;
+            }
+            else if (IsKeyDown(KEY_RIGHT)) {
+                move_delta.x = current_speed * delta_time;
+                curr_dir = 2; // 右
+                is_moving = true;
+            }
 
-                // 检测方向键（你的方向映射：下0/右1/左2/上3）
-                if (IsKeyDown(KEY_UP)) {
-                    new_target.y -= 1;
-                    new_dir = 3;
+            // 2. 碰撞检测：判断移动后的位置是否是墙（像素级）
+            Vector2 new_pos = player_pos;
+            new_pos.x += move_delta.x;
+            new_pos.y += move_delta.y;
+
+            // 计算角色中心对应的迷宫格子（用于判断地块类型）
+            int grid_x = (new_pos.x - ((WINDOW_WIDTH - maze->cols * (CELL_SIZE + CELL_GAP)) / 2)) / (CELL_SIZE + CELL_GAP);
+            int grid_y = (new_pos.y - ((WINDOW_HEIGHT - maze->rows * (CELL_SIZE + CELL_GAP)) / 2)) / (CELL_SIZE + CELL_GAP);
+
+            // 校验：坐标在迷宫范围内 + 不是墙 → 才允许移动
+            bool can_move = true;
+            if (IsPointValid(maze, grid_x, grid_y)) {
+                if (maze->grid[grid_y][grid_x] == CELL_WALL) {
+                    can_move = false; // 墙，禁止移动
                 }
-                else if (IsKeyDown(KEY_DOWN)) {
-                    new_target.y += 1;
-                    new_dir = 0;
+            }
+            else {
+                can_move = false; // 超出迷宫范围，禁止移动
+            }
+
+            // 3. 执行移动（仅当可移动时）
+            if (can_move) {
+                player_pos = new_pos;
+            }
+
+            // 4. 检测当前地块类型（草地/熔岩/终点）
+            if (IsPointValid(maze, grid_x, grid_y)) {
+                // 草地：速度降为1/3
+                if (maze->grid[grid_y][grid_x] == CELL_GRASS) {
+                    current_speed = MOVE_SPEED / 3;
                 }
-                else if (IsKeyDown(KEY_LEFT)) {
-                    new_target.x -= 1;
-                    new_dir = 2;
-                }
-                else if (IsKeyDown(KEY_RIGHT)) {
-                    new_target.x += 1;
-                    new_dir = 1;
+                else {
+                    current_speed = MOVE_SPEED; // 恢复基础速度
                 }
 
-                // 校验目标格子是否有效（非墙+在迷宫范围内）
-                if (new_target.x != current_grid_pos.x || new_target.y != current_grid_pos.y) {
-                    if (IsPointValid(maze, new_target.x, new_target.y) && maze->grid[new_target.y][new_target.x] != CELL_WALL) {
-                        target_grid_pos = new_target; // 设置目标格子
-                        curr_dir = new_dir;           // 更新方向
-                        is_moving = true;             // 开始移动
-                        // 切换方向时重置动画帧
-                        curr_frame = 0;
-                        frame_rect.y = curr_dir * character_height;
-                        frame_rect.x = 0;
+                // 熔岩：第二次踩触发失败（仅当从非熔岩→熔岩时计数）
+                bool curr_on_lava = (maze->grid[grid_y][grid_x] == CELL_LAVA);
+                if (curr_on_lava && !on_lava) {
+                    lava_step++;
+                    if (lava_step >= 2) {
+                        game_over = true;
+                        TraceLog(LOG_INFO, "游戏失败！第二次踩到熔岩");
                     }
+                }
+                on_lava = curr_on_lava;
+
+                // 终点：到达即胜利
+                if (maze->grid[grid_y][grid_x] == CELL_END) {
+                    game_win = true;
+                    TraceLog(LOG_INFO, "游戏胜利！到达终点");
                 }
             }
 
-            // 2. 像素级平滑移动（核心）
+            // 5. 动画播放（移动时播放，停止则暂停在当前帧）
+            frame_rect.y = curr_dir * character_height; // 更新方向行
             if (is_moving) {
-                // 计算目标格子的像素坐标
-                Vector2 target_pos = GetCellPixelPos(maze, target_grid_pos.x, target_grid_pos.y);
-
-                // 计算x/y方向的移动增量（线性插值）
-                float move_step = MOVE_SPEED_PX * delta_time;
-
-                // X轴移动
-                if (fabs(player_pos.x - target_pos.x) > 1.0F) { // 误差小于1像素则视为到达
-                    if (player_pos.x < target_pos.x) player_pos.x += move_step;
-                    else player_pos.x -= move_step;
-                }
-                else {
-                    player_pos.x = target_pos.x; // 校准位置
-                }
-
-                // Y轴移动
-                if (fabs(player_pos.y - target_pos.y) > 1.0F) {
-                    if (player_pos.y < target_pos.y) player_pos.y += move_step;
-                    else player_pos.y -= move_step;
-                }
-                else {
-                    player_pos.y = target_pos.y; // 校准位置
-                }
-
-                // 检查是否到达目标格子
-                if (player_pos.x == target_pos.x && player_pos.y == target_pos.y) {
-                    current_grid_pos = target_grid_pos; // 更新当前格子
-                    is_moving = false;                  // 停止移动
-
-                    // 到达新格子后检测地块类型（草地/熔岩/终点）
-                    if (maze->grid[current_grid_pos.y][current_grid_pos.x] == CELL_GRASS) {
-                        // 草地不改变移动速度（因为是固定像素速度，如需减速可调整MOVE_SPEED_PX）
-                        // 如需草地减速：MOVE_SPEED_PX = 200.0F / 3;
-                        // 离开草地恢复：可在非草地时重置MOVE_SPEED_PX
-                    }
-                    if (maze->grid[current_grid_pos.y][current_grid_pos.x] == CELL_LAVA) {
-                        lava_step++;
-                        if (lava_step >= 2) {
-                            game_over = true;
-                            TraceLog(LOG_INFO, "游戏失败！第二次踩到熔岩");
-                        }
-                    }
-                    if (maze->grid[current_grid_pos.y][current_grid_pos.x] == CELL_END) {
-                        game_win = true;
-                        TraceLog(LOG_INFO, "游戏胜利！到达终点");
-                    }
-                }
-
-                // 3. 移动时播放动画（流畅无卡顿）
                 anim_timer += delta_time;
                 if (anim_timer >= FRAME_DURATION) {
                     anim_timer = 0;
@@ -177,11 +169,7 @@ int main() {
                     frame_rect.x = curr_frame * character_width;
                 }
             }
-            else {
-                // 停止移动时，动画重置为第0帧
-                curr_frame = 0;
-                frame_rect.x = 0;
-            }
+            // 停止移动时，动画停在当前帧（不重置）
         }
 
 
