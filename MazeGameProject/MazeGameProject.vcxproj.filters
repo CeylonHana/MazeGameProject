@@ -15,8 +15,74 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="MazeGameProject.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="maze_textures.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="maze_data.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="maze_utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="maze_algorithms.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="maze_render.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="maze_config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="maze_textures.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="maze_data.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="maze_utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="maze_algorithms.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="maze_render.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\slime.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\start.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\wall.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\character.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\end.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\floor.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\grass.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\lava.png">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\maze0.txt">
+      <Filter>资源文件</Filter>
+    </Text>
   </ItemGroup>
 </Project>

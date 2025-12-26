@@ -103,6 +103,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\raylib-5.0_win64_msvc16\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,7 +127,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="MazeGameProject.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="maze_algorithms.cpp" />
+    <ClCompile Include="maze_data.cpp" />
+    <ClCompile Include="maze_render.cpp" />
+    <ClCompile Include="maze_textures.cpp" />
+    <ClCompile Include="maze_utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="maze_algorithms.h" />
+    <ClInclude Include="maze_config.h" />
+    <ClInclude Include="maze_data.h" />
+    <ClInclude Include="maze_render.h" />
+    <ClInclude Include="maze_textures.h" />
+    <ClInclude Include="maze_utils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\character.png" />
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\end.png" />
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\floor.png" />
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\grass.png" />
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\lava.png" />
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\slime.png" />
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\start.png" />
+    <Image Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\wall.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="C:\Users\LENOVO\Desktop\程序设计综合实践指导书2025_0902\题目1_迷宫小游戏\资源文件\maze0.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
